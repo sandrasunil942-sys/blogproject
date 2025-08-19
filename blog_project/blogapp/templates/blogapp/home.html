@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Home - Blog & Image Sharing</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+<div class="container py-4">
+    <h2 class="mb-4 text-center">Welcome to Blog & Image Sharing Site</h2>
+
+    <div class="mb-3 text-end">
+        {% if user.is_authenticated %}
+            <p class="mb-1">Hello, <strong>{{ user.username }}</strong>!</p>
+            <a href="{% url 'login' %}" class="btn btn-outline-danger btn-sm me-2">Logout</a>
+            <a href="{% url 'create_post' %}" class="btn btn-primary btn-sm">+ New Blog Post</a>
+        {% else %}
+            <a href="{% url 'login' %}" class="btn btn-outline-primary btn-sm me-2">Login</a>
+            <a href="{% url 'register' %}" class="btn btn-success btn-sm">Register</a>
+        {% endif %}
+    </div>
+
+    <!-- Search Bar -->
+    <form method="get" action="{% url 'home' %}" class="input-group mb-4">
+        <input type="text" name="q" class="form-control" placeholder="Search blog posts..." value="{{ query|default_if_none:'' }}">
+        <button type="submit" class="btn btn-outline-secondary">Search</button>
+    </form>
+
+    <h3 class="mb-3"> Blog Posts</h3>
+
+    {% for post in posts %}
+        <div class="card mb-4">
+            <div class="card-body">
+                <h4 class="card-title">
+                    <a href="{% url 'post_detail' post.id %}">{{ post.title }}</a>
+                </h4>
+                <p class="card-text">{{ post.content|truncatewords:20 }}</p>
+
+                {% if post.image %}
+                    <img src="{{ post.image.url }}" class="img-fluid mb-2 rounded" style="max-width: 300px;">
+                {% endif %}
+
+                <p class="text-muted small">By <strong>{{ post.author.username }}</strong> | {{ post.created_at }}</p>
+
+                {% if user == post.author %}
+                    <a href="{% url 'edit_post' post.id %}" class="btn btn-sm btn-outline-primary me-2">Edit</a>
+                    <a href="{% url 'delete_post' post.id %}" class="btn btn-sm btn-outline-danger">Delete</a>
+                {% endif %}
+            </div>
+        </div>
+    {% empty %}
+        <p class="text-muted">No posts found{{ query|yesno:" for your search query.,." }}</p>
+    {% endfor %}
+
+    <!-- Pagination -->
+    {% if posts.paginator.num_pages > 1 %}
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                {% if posts.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?{% if query %}q={{ query }}&{% endif %}page=1">First</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?{% if query %}q={{ query }}&{% endif %}page={{ posts.previous_page_number }}">Previous</a>
+                    </li>
+                {% endif %}
+
+                <li class="page-item disabled">
+                    <span class="page-link">Page {{ posts.number }} of {{ posts.paginator.num_pages }}</span>
+                </li>
+
+                {% if posts.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?{% if query %}q={{ query }}&{% endif %}page={{ posts.next_page_number }}">Next</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?{% if query %}q={{ query }}&{% endif %}page={{ posts.paginator.num_pages }}">Last</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% endif %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
